@@ -6,6 +6,8 @@ import { adminDb } from "@/firebase/admin";
 import { headers } from "next/headers";
 import admin from 'firebase-admin';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const authorization = (await headers()).get("Authorization");

@@ -5,6 +5,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/firebase/admin";
 import admin from 'firebase-admin';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     // 1. Validar o usuário

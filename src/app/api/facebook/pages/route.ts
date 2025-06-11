@@ -7,6 +7,8 @@ import { adminDb } from "@/firebase/admin";
 import { headers } from "next/headers";
 import admin from 'firebase-admin';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     // 1. Validar o usuário através do Token de ID do Firebase
