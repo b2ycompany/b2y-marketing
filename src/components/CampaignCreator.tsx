@@ -19,7 +19,7 @@ export default function CampaignCreator() {
 
     // Estados dos Formulários
     const [campaignForm, setCampaignForm] = useState<CampaignFormData>({ adAccountId: '', campaignName: `Campanha de Tráfego ${new Date().toLocaleDateString('pt-BR')}`, objective: 'OUTCOME_TRAFFIC' });
-    const [adSetForm, setAdSetForm] = useState<AdSetFormData>({ adSetName: 'Conjunto - Brasil', dailyBudget: '500', targetingCountry: 'BR' });
+    const [adSetForm, setAdSetForm] = useState<AdSetFormData>({ adSetName: 'Conjunto - Brasil', dailyBudget: '10.00', targetingCountry: 'BR' });
     const [adForm, setAdForm] = useState<AdFormData>({ adName: 'Anúncio Principal', pageId: '', message: 'Clique aqui e saiba mais sobre nossa oferta incrível!', headline: 'Oferta Especial por Tempo Limitado!', imageUrl: 'https://i.imgur.com/3aG4qA0.png', link: 'https://www.google.com' });
 
     // Estados de Controle de UI
@@ -27,7 +27,7 @@ export default function CampaignCreator() {
     const [feedback, setFeedback] = useState<{ type: 'success' | 'error', message: string } | null>(null);
     const [createdIds, setCreatedIds] = useState({ campaignId: '', adSetId: '' });
 
-    // Efeito para buscar dados iniciais (contas e páginas)
+    // Efeito para buscar dados iniciais
     useEffect(() => {
         if (user) {
             fetchInitialData();
@@ -69,12 +69,10 @@ export default function CampaignCreator() {
         }
     };
     
-    // Handler para mudança nos inputs dos formulários
     const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>, formSetter: React.Dispatch<React.SetStateAction<any>>) => {
         formSetter((prev: any) => ({ ...prev, [e.target.name]: e.target.value }));
     };
     
-    // Handler para criar a Campanha (Passo 1)
     const handleCreateCampaign = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user) return;
@@ -95,7 +93,6 @@ export default function CampaignCreator() {
         }
     };
 
-    // Handler para criar o Conjunto de Anúncios (Passo 2)
     const handleCreateAdSet = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user || !createdIds.campaignId) return;
@@ -103,7 +100,14 @@ export default function CampaignCreator() {
         setFeedback(null);
         try {
             const idToken = await user.getIdToken(true);
-            const payload = { ...adSetForm, adAccountId: campaignForm.adAccountId, campaignId: createdIds.campaignId };
+            const budgetInCents = Math.round(parseFloat(adSetForm.dailyBudget.replace(',', '.')) * 100);
+            const payload = { 
+                adSetName: adSetForm.adSetName,
+                targetingCountry: adSetForm.targetingCountry,
+                dailyBudget: budgetInCents,
+                adAccountId: campaignForm.adAccountId, 
+                campaignId: createdIds.campaignId 
+            };
             const res = await fetch('/api/facebook/adsets/create', { method: 'POST', headers: { 'Authorization': `Bearer ${idToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
             const result = await res.json();
             if (!res.ok) throw new Error(result.error);
@@ -115,12 +119,11 @@ export default function CampaignCreator() {
             setIsSubmitting(prev => ({ ...prev, adSet: false }));
         }
     };
-
-    // Handler para criar o Anúncio (Passo 3)
+    
     const handleCreateAd = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user || !createdIds.adSetId) return;
-        setIsSubmitting(prev => ({ ...prev, ad: true }));
+        setIsSubmitting(prev => ({...prev, ad: true}));
         setFeedback(null);
         try {
             const idToken = await user.getIdToken(true);
@@ -132,7 +135,7 @@ export default function CampaignCreator() {
         } catch (error: any) {
             setFeedback({ type: 'error', message: error.message });
         } finally {
-            setIsSubmitting(prev => ({ ...prev, ad: false }));
+            setIsSubmitting(prev => ({...prev, ad: false}));
         }
     };
 
@@ -173,8 +176,25 @@ export default function CampaignCreator() {
                         <input type="text" name="adSetName" value={adSetForm.adSetName} onChange={(e) => handleFormChange(e, setAdSetForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md px-3 py-2" required />
                     </div>
                     <div>
-                        <label htmlFor="dailyBudget" className="block text-sm font-medium text-gray-300">Orçamento Diário (em centavos)</label>
-                        <input type="number" name="dailyBudget" value={adSetForm.dailyBudget} onChange={(e) => handleFormChange(e, setAdSetForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md px-3 py-2" placeholder="Ex: 1000 para R$10,00" required />
+                        <label htmlFor="dailyBudget" className="block text-sm font-medium text-gray-300">Orçamento Diário (em R$)</label>
+                        <input
+                            type="number"
+                            name="dailyBudget"
+                            value={adSetForm.dailyBudget}
+                            onChange={(e) => handleFormChange(e, setAdSetForm)}
+                            className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md px-3 py-2"
+                            placeholder="Ex: 10.50"
+                            step="0.01"
+                            required
+                        />
+                        <a 
+                          href={campaignForm.adAccountId ? `https://www.facebook.com/ads/manager/account_settings/account_billing?act=${campaignForm.adAccountId}` : '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`text-xs text-gray-400 hover:text-primary mt-1 inline-block ${!campaignForm.adAccountId && 'pointer-events-none opacity-50'}`}
+                        >
+                          Gerenciar forma de pagamento no Facebook ↗
+                        </a>
                     </div>
                     <button type="submit" disabled={isSubmitting.adSet || createdIds.adSetId !== ''} className="w-full font-bold py-2.5 px-4 rounded-lg text-white bg-green-600 hover:opacity-90 disabled:bg-gray-500 disabled:cursor-not-allowed transition">
                         {isSubmitting.adSet ? 'Criando...' : 'Criar Conjunto e ir para Passo 3'}
