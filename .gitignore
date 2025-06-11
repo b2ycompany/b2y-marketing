@@ -39,3 +39,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Pasta de dependências do Node
+node_modules
+
+# Arquivos de variáveis de ambiente locais
+.env.local
+
+# Ignorar TODOS os arquivos .json na raiz do projeto
+*.json
+
+# Cache de build do Next.js
+.next
