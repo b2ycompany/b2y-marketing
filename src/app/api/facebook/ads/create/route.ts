@@ -1,6 +1,3 @@
-// Documentação:
-// API Route para o passo final: criar o Ad Creative e o Ad.
-
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/firebase/admin";
 import admin from 'firebase-admin';
@@ -41,6 +38,10 @@ export async function POST(request: NextRequest) {
           link: link,
           name: headline,
           image_url: imageUrl,
+          // --- A LINHA QUE FALTAVA ---
+          // Adicionando um botão de "Call to Action" ao anúncio.
+          // 'LEARN_MORE' se traduz para "Saiba Mais".
+          call_to_action: { type: 'LEARN_MORE' }
         }
       },
       access_token: accessToken,
