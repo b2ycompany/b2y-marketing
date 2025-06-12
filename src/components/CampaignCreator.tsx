@@ -6,21 +6,46 @@ import { CheckCircle, Circle, ArrowRight } from "lucide-react";
 import AdPreview from "./AdPreview";
 import TargetingEditor, { TargetingData } from "./TargetingEditor";
 
-// Tipos
-type AdAccount = { account_id: string; name: string; };
-type FacebookPage = { id: string; name: string; picture?: { data: { url: string; } }; };
-type CampaignFormData = { adAccountId: string; campaignName: string; objective: string; };
-type AdSetFormData = { adSetName: string; dailyBudget: string; };
-type AdFormData = { adName: string; pageId: string; message: string; headline: string; imageUrl: string; link: string; };
+// Tipos para garantir a segurança do nosso código
+type AdAccount = {
+  account_id: string;
+  name: string;
+};
+type FacebookPage = {
+  id: string;
+  name: string;
+  picture?: {
+    data: {
+      url: string;
+    };
+  };
+};
+type CampaignFormData = {
+  adAccountId: string;
+  campaignName: string;
+  objective: string;
+};
+type AdSetFormData = {
+  adSetName: string;
+  dailyBudget: string;
+};
+type AdFormData = {
+  adName: string;
+  pageId: string;
+  message: string;
+  headline: string;
+  imageUrl: string;
+  link: string;
+};
 
 export default function CampaignCreator() {
     const { user } = useAuth();
 
-    // Estados de Dados
+    // Estados para guardar os dados vindos da API da Meta
     const [adAccounts, setAdAccounts] = useState<AdAccount[]>([]);
     const [pages, setPages] = useState<FacebookPage[]>([]);
 
-    // Estados dos Formulários (começando em branco)
+    // Estados para controlar os dados de cada formulário, começando em branco
     const [campaignForm, setCampaignForm] = useState<CampaignFormData>({ adAccountId: '', campaignName: '', objective: 'OUTCOME_TRAFFIC' });
     const [adSetForm, setAdSetForm] = useState<AdSetFormData>({ adSetName: '', dailyBudget: '20.00' });
     const [adForm, setAdForm] = useState<AdFormData>({ adName: '', pageId: '', message: '', headline: '', imageUrl: '', link: '' });
@@ -33,12 +58,13 @@ export default function CampaignCreator() {
         geo_locations: { countries: ['BR'] }
     });
     
-    // Estados de Controle de UI
+    // Estados de Controle da Interface do Usuário
     const [activeStep, setActiveStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [feedback, setFeedback] = useState<{ type: 'success' | 'error', message: string } | null>(null);
     const [createdIds, setCreatedIds] = useState({ campaignId: '', adSetId: '', adId: '' });
 
+    // Efeito para buscar dados iniciais (contas e páginas)
     useEffect(() => {
         if (user) {
             fetchInitialData();
@@ -50,10 +76,12 @@ export default function CampaignCreator() {
         try {
             const idToken = await user.getIdToken(true);
             const headers = { 'Authorization': `Bearer ${idToken}` };
+            
             const [adAccountsRes, pagesRes] = await Promise.all([
                 fetch('/api/facebook/adaccounts', { headers }),
                 fetch('/api/facebook/pages', { headers })
             ]);
+
             const adAccountsData = await adAccountsRes.json();
             if (adAccountsRes.ok) {
                 setAdAccounts(adAccountsData);
@@ -61,6 +89,7 @@ export default function CampaignCreator() {
                     setCampaignForm(prev => ({ ...prev, adAccountId: adAccountsData[0].account_id }));
                 }
             }
+
             const pagesData = await pagesRes.json();
             if (pagesRes.ok) {
                 setPages(pagesData);
@@ -69,14 +98,11 @@ export default function CampaignCreator() {
                 }
             }
         } catch (error: any) {
-            setFeedback({ type: 'error', message: `Erro ao carregar dados: ${error.message}` });
+            setFeedback({ type: 'error', message: `Erro ao carregar dados da conta: ${error.message}` });
         }
     };
     
-    const handleFormChange = (
-        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
-        formSetter: React.Dispatch<React.SetStateAction<any>>
-    ) => {
+    const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>, formSetter: React.Dispatch<React.SetStateAction<any>>) => {
         formSetter((prev: any) => ({ ...prev, [e.target.name]: e.target.value }));
     };
 
@@ -135,6 +161,8 @@ export default function CampaignCreator() {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <div className="space-y-6">
+                {feedback?.type === 'error' && ( <div className="p-4 rounded-md bg-red-900/50 text-red-300 border border-red-500"><p className="font-bold">Ocorreu um Erro:</p><p>{feedback.message}</p></div> )}
+
                 <div className={`bg-dark-card border rounded-xl p-6 ${activeStep === 1 ? 'border-primary' : 'border-gray-700'}`}>
                     <div className="flex justify-between items-center">
                         <h2 className="text-xl font-bold text-white flex items-center space-x-3">{getStepStatusIcon(1)} <span>Passo 1: Detalhes da Campanha</span></h2>
@@ -142,7 +170,7 @@ export default function CampaignCreator() {
                     </div>
                     {activeStep === 1 && (
                         <div className="mt-6 space-y-4 animate-fade-in">
-                            <div><label htmlFor="adAccountId" className="block text-sm font-medium text-gray-300">Conta de Anúncios</label><select name="adAccountId" value={campaignForm.adAccountId} onChange={(e) => handleFormChange(e, setCampaignForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md py-2 pl-3 pr-10" required><option value="" disabled>{adAccounts.length > 0 ? "Selecione uma conta..." : "Carregando..."}</option>{adAccounts.map(acc => <option key={acc.account_id} value={acc.account_id}>{acc.name} ({acc.account_id})</option>)}</select></div>
+                            <div><label htmlFor="adAccountId" className="block text-sm font-medium text-gray-300">Conta de Anúncios</label><select name="adAccountId" value={campaignForm.adAccountId} onChange={(e) => handleFormChange(e, setCampaignForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md py-2 pl-3 pr-10" required><option value="" disabled>{adAccounts.length > 0 ? "Selecione uma conta..." : "Carregando contas..."}</option>{adAccounts.map(acc => <option key={acc.account_id} value={acc.account_id}>{acc.name} ({acc.account_id})</option>)}</select></div>
                             <div><label htmlFor="campaignName" className="block text-sm font-medium text-gray-300">Nome da Campanha</label><input type="text" name="campaignName" value={campaignForm.campaignName} onChange={(e) => handleFormChange(e, setCampaignForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md px-3 py-2" required placeholder="Ex: Campanha de Lançamento" /></div>
                             <div><label htmlFor="objective" className="block text-sm font-medium text-gray-300">Objetivo</label><select name="objective" value={campaignForm.objective} onChange={(e) => handleFormChange(e, setCampaignForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md py-2 pl-3 pr-10"><option value="OUTCOME_TRAFFIC">Tráfego</option><option value="OUTCOME_ENGAGEMENT">Engajamento</option><option value="OUTCOME_LEADS">Cadastros</option></select></div>
                         </div>
@@ -157,13 +185,13 @@ export default function CampaignCreator() {
                      {activeStep === 2 && (
                         <div className="mt-6 space-y-4 animate-fade-in">
                             <div><label htmlFor="adSetName" className="block text-sm font-medium text-gray-300">Nome do Conjunto de Anúncios</label><input type="text" name="adSetName" value={adSetForm.adSetName} onChange={(e) => handleFormChange(e, setAdSetForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md px-3 py-2" required placeholder="Ex: Público Jovem - SP"/></div>
-                            <div><label htmlFor="dailyBudget" className="block text-sm font-medium text-gray-300">Orçamento Diário (em R$)</label><input type="number" name="dailyBudget" value={adSetForm.dailyBudget} onChange={(e) => handleFormChange(e, setAdSetForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md px-3 py-2" placeholder="Ex: 20.00" step="0.01" required/></div>
                             <TargetingEditor targeting={targeting} setTargeting={setTargeting} />
+                            <div><label htmlFor="dailyBudget" className="block text-sm font-medium text-gray-300">Orçamento Diário (em R$)</label><input type="number" name="dailyBudget" value={adSetForm.dailyBudget} onChange={(e) => handleFormChange(e, setAdSetForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md px-3 py-2" placeholder="Ex: 20.00" step="0.01" required/></div>
                         </div>
                     )}
                 </div>
 
-                 <div className={`bg-dark-card border border-gray-700 rounded-xl p-6 transition-opacity duration-500 ${activeStep >= 3 ? 'opacity-100' : 'opacity-50'} ${activeStep === 3 ? 'border-primary' : 'border-gray-700'}`}>
+                 <div className={`bg-dark-card border rounded-xl p-6 transition-opacity duration-500 ${activeStep >= 3 ? 'opacity-100' : 'opacity-50'} ${activeStep === 3 ? 'border-primary' : 'border-gray-700'}`}>
                     <div className="flex justify-between items-center">
                         <h2 className="text-xl font-bold text-white flex items-center space-x-3">{getStepStatusIcon(3)} <span>Passo 3: Criativo do Anúncio</span></h2>
                     </div>
@@ -186,9 +214,9 @@ export default function CampaignCreator() {
                     </div>
                 )}
                 
-                {feedback && (
-                    <div className={`mt-4 p-4 rounded-md animate-fade-in ${feedback.type === 'success' ? 'bg-green-900/50 text-green-300 border border-green-500' : 'bg-red-900/50 text-red-300 border border-red-500'}`}>
-                        <p className="font-bold">{feedback.type === 'success' ? 'Sucesso!' : 'Erro:'}</p>
+                {feedback?.type === 'success' && (
+                    <div className="mt-4 p-4 rounded-md animate-fade-in bg-green-900/50 text-green-300 border border-green-500">
+                        <p className="font-bold">Sucesso!</p>
                         <p>{feedback.message}</p>
                     </div>
                 )}
@@ -196,7 +224,7 @@ export default function CampaignCreator() {
             
             <div className="sticky top-10">
                 <h3 className="text-lg font-semibold text-white mb-4">Preview do Anúncio</h3>
-                <AdPreview pageName={pages.find(p => p.id === adForm.pageId)?.name || "Sua Página"} pageImage={pages.find(p => p.id === adForm.pageId)?.picture?.data?.url || ""} message={adForm.message} headline={adForm.headline} link={adForm.link} imageUrl={adForm.imageUrl}/>
+                <AdPreview pageName={selectedPage?.name || "Sua Página"} pageImage={selectedPage?.picture?.data?.url || ""} message={adForm.message} headline={adForm.headline} link={adForm.link} imageUrl={adForm.imageUrl}/>
             </div>
         </div>
     );
