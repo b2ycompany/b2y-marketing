@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/firebase/admin";
 import admin from 'firebase-admin';
 
+export const dynamic = 'force-dynamic'; // Garante que a rota seja sempre dinâmica
+
 export async function POST(request: NextRequest) {
   try {
     const authorization = request.headers.get("Authorization");
@@ -38,10 +40,9 @@ export async function POST(request: NextRequest) {
           link: link,
           name: headline,
           image_url: imageUrl,
-          // --- A LINHA QUE FALTAVA ---
-          // Adicionando um botão de "Call to Action" ao anúncio.
-          // 'LEARN_MORE' se traduz para "Saiba Mais".
-          call_to_action: { type: 'LEARN_MORE' }
+          // --- A CORREÇÃO FINAL ---
+          // Adicionando o botão de "Call to Action" ao anúncio.
+          call_to_action: { type: 'LEARN_MORE' } // 'LEARN_MORE' = "Saiba Mais"
         }
       },
       access_token: accessToken,
