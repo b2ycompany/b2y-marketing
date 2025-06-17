@@ -48,7 +48,7 @@ export default function CampaignCreator() {
     // Estados para controlar os dados de cada formulário
     const [campaignForm, setCampaignForm] = useState<CampaignFormData>({ adAccountId: '', campaignName: '', objective: 'OUTCOME_TRAFFIC' });
     const [adSetForm, setAdSetForm] = useState<AdSetFormData>({ adSetName: '', dailyBudget: '20.00' });
-    const [adForm, setAdForm] = useState<AdFormData>({ adName: '', pageId: '', message: '', headline: '', imageUrl: 'https://images.unsplash.com/photo-1555529669-e69e7aa0ba9e?q=80&w=1200', link: 'https://b2y-marketing.vercel.app' });
+    const [adForm, setAdForm] = useState<AdFormData>({ adName: '', pageId: '', message: '', headline: '', imageUrl: '', link: '' });
     
     // Novo estado para o targeting avançado
     const [targeting, setTargeting] = useState<TargetingData>({
@@ -188,7 +188,7 @@ export default function CampaignCreator() {
                             <div>
                                 <label htmlFor="adAccountId" className="block text-sm font-medium text-gray-300">Conta de Anúncios</label>
                                 <select name="adAccountId" value={campaignForm.adAccountId} onChange={(e) => handleFormChange(e, setCampaignForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md py-2 pl-3 pr-10" required>
-                                    <option value="" disabled>{adAccounts.length > 0 ? "Selecione uma conta..." : "Carregando contas..."}</option>
+                                    <option value="" disabled>{adAccounts.length > 0 ? "Selecione uma conta..." : "Carregando..."}</option>
                                     {adAccounts.map(acc => <option key={acc.account_id} value={acc.account_id}>{acc.name} ({acc.account_id})</option>)}
                                 </select>
                             </div>
@@ -269,9 +269,9 @@ export default function CampaignCreator() {
                     </div>
                 )}
                 
-                {feedback && (
-                    <div className={`mt-4 p-4 rounded-md animate-fade-in ${feedback.type === 'success' ? 'bg-green-900/50 text-green-300 border border-green-500' : 'bg-red-900/50 text-red-300 border border-red-500'}`}>
-                        <p className="font-bold">{feedback.type === 'success' ? 'Sucesso!' : 'Erro:'}</p>
+                {activeStep > 3 && feedback?.type === 'success' && (
+                    <div className="p-4 rounded-md animate-fade-in bg-green-900/50 text-green-300 border border-green-500">
+                        <p className="font-bold">Sucesso!</p>
                         <p>{feedback.message}</p>
                     </div>
                 )}
