@@ -123,13 +123,14 @@ export default function CampaignCreator() {
             const headers = { 'Authorization': `Bearer ${idToken}`, 'Content-Type': 'application/json' };
 
             if (activeStep === 1) {
+                if (!campaignForm.campaignName || !campaignForm.adAccountId) { throw new Error("Preencha todos os campos do Passo 1."); }
                 const res = await fetch('/api/facebook/campaigns/create', { method: 'POST', headers, body: JSON.stringify(campaignForm) });
                 const result = await res.json();
                 if (!res.ok) throw new Error(result.error);
-                setFeedback({ type: 'success', message: `Passo 1 OK! Campanha criada com ID: ${result.campaignId}` });
                 setCreatedIds(prev => ({ ...prev, campaignId: result.campaignId }));
                 setActiveStep(2);
             } else if (activeStep === 2) {
+                if (!adSetForm.adSetName || !adSetForm.dailyBudget) { throw new Error("Preencha todos os campos do Passo 2."); }
                 const budgetInCents = Math.round(parseFloat(adSetForm.dailyBudget.replace(',', '.')) * 100);
                 const payload = { 
                     ...adSetForm, 
@@ -141,10 +142,10 @@ export default function CampaignCreator() {
                 const res = await fetch('/api/facebook/adsets/create', { method: 'POST', headers, body: JSON.stringify(payload) });
                 const result = await res.json();
                 if (!res.ok) throw new Error(result.error);
-                setFeedback({ type: 'success', message: `Passo 2 OK! Conjunto de Anúncios criado com ID: ${result.adSetId}` });
                 setCreatedIds(prev => ({ ...prev, adSetId: result.adSetId }));
                 setActiveStep(3);
             } else if (activeStep === 3) {
+                if (!adForm.adName || !adForm.pageId || !adForm.message || !adForm.headline || !adForm.link || !adForm.imageUrl) { throw new Error("Preencha todos os campos do Passo 3."); }
                 const payload = { ...adForm, adAccountId: campaignForm.adAccountId, adSetId: createdIds.adSetId };
                 const res = await fetch('/api/facebook/ads/create', { method: 'POST', headers, body: JSON.stringify(payload) });
                 const result = await res.json();
@@ -185,25 +186,9 @@ export default function CampaignCreator() {
                     </div>
                     {activeStep === 1 && (
                         <div className="mt-6 space-y-4 animate-fade-in">
-                            <div>
-                                <label htmlFor="adAccountId" className="block text-sm font-medium text-gray-300">Conta de Anúncios</label>
-                                <select name="adAccountId" value={campaignForm.adAccountId} onChange={(e) => handleFormChange(e, setCampaignForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md py-2 pl-3 pr-10" required>
-                                    <option value="" disabled>{adAccounts.length > 0 ? "Selecione uma conta..." : "Carregando..."}</option>
-                                    {adAccounts.map(acc => <option key={acc.account_id} value={acc.account_id}>{acc.name} ({acc.account_id})</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label htmlFor="campaignName" className="block text-sm font-medium text-gray-300">Nome da Campanha</label>
-                                <input type="text" name="campaignName" value={campaignForm.campaignName} onChange={(e) => handleFormChange(e, setCampaignForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md px-3 py-2" required placeholder="Ex: Campanha de Lançamento" />
-                            </div>
-                            <div>
-                                <label htmlFor="objective" className="block text-sm font-medium text-gray-300">Objetivo</label>
-                                <select name="objective" value={campaignForm.objective} onChange={(e) => handleFormChange(e, setCampaignForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md py-2 pl-3 pr-10">
-                                    <option value="OUTCOME_TRAFFIC">Tráfego</option>
-                                    <option value="OUTCOME_ENGAGEMENT">Engajamento</option>
-                                    <option value="OUTCOME_LEADS">Cadastros</option>
-                                </select>
-                            </div>
+                            <div><label htmlFor="adAccountId" className="block text-sm font-medium text-gray-300">Conta de Anúncios</label><select name="adAccountId" value={campaignForm.adAccountId} onChange={(e) => handleFormChange(e, setCampaignForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md py-2 pl-3 pr-10" required><option value="" disabled>{adAccounts.length > 0 ? "Selecione uma conta..." : "Carregando..."}</option>{adAccounts.map(acc => <option key={acc.account_id} value={acc.account_id}>{acc.name} ({acc.account_id})</option>)}</select></div>
+                            <div><label htmlFor="campaignName" className="block text-sm font-medium text-gray-300">Nome da Campanha</label><input type="text" name="campaignName" value={campaignForm.campaignName} onChange={(e) => handleFormChange(e, setCampaignForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md px-3 py-2" required placeholder="Ex: Campanha de Lançamento" /></div>
+                            <div><label htmlFor="objective" className="block text-sm font-medium text-gray-300">Objetivo</label><select name="objective" value={campaignForm.objective} onChange={(e) => handleFormChange(e, setCampaignForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md py-2 pl-3 pr-10"><option value="OUTCOME_TRAFFIC">Tráfego</option><option value="OUTCOME_ENGAGEMENT">Engajamento</option><option value="OUTCOME_LEADS">Cadastros</option></select></div>
                         </div>
                     )}
                 </div>
@@ -215,15 +200,9 @@ export default function CampaignCreator() {
                     </div>
                      {activeStep === 2 && (
                         <div className="mt-6 space-y-4 animate-fade-in">
-                            <div>
-                                <label htmlFor="adSetName" className="block text-sm font-medium text-gray-300">Nome do Conjunto de Anúncios</label>
-                                <input type="text" name="adSetName" value={adSetForm.adSetName} onChange={(e) => handleFormChange(e, setAdSetForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md px-3 py-2" required placeholder="Ex: Público Jovem - SP"/>
-                            </div>
+                            <div><label htmlFor="adSetName" className="block text-sm font-medium text-gray-300">Nome do Conjunto de Anúncios</label><input type="text" name="adSetName" value={adSetForm.adSetName} onChange={(e) => handleFormChange(e, setAdSetForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md px-3 py-2" required placeholder="Ex: Público Jovem - SP"/></div>
                             <TargetingEditor targeting={targeting} setTargeting={setTargeting} />
-                            <div>
-                                <label htmlFor="dailyBudget" className="block text-sm font-medium text-gray-300">Orçamento Diário (em R$)</label>
-                                <input type="number" name="dailyBudget" value={adSetForm.dailyBudget} onChange={(e) => handleFormChange(e, setAdSetForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md px-3 py-2" placeholder="Ex: 20.00" step="0.01" required/>
-                            </div>
+                            <div><label htmlFor="dailyBudget" className="block text-sm font-medium text-gray-300">Orçamento Diário (em R$)</label><input type="number" name="dailyBudget" value={adSetForm.dailyBudget} onChange={(e) => handleFormChange(e, setAdSetForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md px-3 py-2" placeholder="Ex: 20.00" step="0.01" required/></div>
                         </div>
                     )}
                 </div>
@@ -234,29 +213,11 @@ export default function CampaignCreator() {
                     </div>
                      {activeStep === 3 && (
                         <div className="mt-6 space-y-4 animate-fade-in">
-                           <div>
-                               <label htmlFor="pageId" className="block text-sm font-medium text-gray-300">Página do Facebook/Instagram</label>
-                               <select name="pageId" value={adForm.pageId} onChange={(e) => handleFormChange(e, setAdForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md py-2 pl-3 pr-10" required>
-                                   <option value="" disabled>{pages.length > 0 ? "Selecione uma página..." : "Carregando..."}</option>
-                                   {pages.map(page => <option key={page.id} value={page.id}>{page.name}</option>)}
-                                </select>
-                            </div>
-                           <div>
-                               <label htmlFor="message" className="block text-sm font-medium text-gray-300">Texto Principal</label>
-                               <textarea name="message" value={adForm.message} onChange={(e) => handleFormChange(e, setAdForm)} rows={3} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md px-3 py-2" required placeholder="Fale sobre seu produto ou serviço..."/>
-                           </div>
-                           <div>
-                               <label htmlFor="headline" className="block text-sm font-medium text-gray-300">Título</label>
-                               <input type="text" name="headline" value={adForm.headline} onChange={(e) => handleFormChange(e, setAdForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md px-3 py-2" required placeholder="Uma chamada curta e impactante"/>
-                           </div>
-                           <div>
-                               <label htmlFor="link" className="block text-sm font-medium text-gray-300">Link de Destino</label>
-                               <input type="url" name="link" value={adForm.link} onChange={(e) => handleFormChange(e, setAdForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md px-3 py-2" required placeholder="https://..."/>
-                           </div>
-                           <div>
-                               <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-300">URL da Imagem</label>
-                               <input type="url" name="imageUrl" value={adForm.imageUrl} onChange={(e) => handleFormChange(e, setAdForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md px-3 py-2" required placeholder="https://..."/>
-                           </div>
+                           <div><label htmlFor="pageId" className="block text-sm font-medium text-gray-300">Página do Facebook/Instagram</label><select name="pageId" value={adForm.pageId} onChange={(e) => handleFormChange(e, setAdForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md py-2 pl-3 pr-10" required><option value="" disabled>{pages.length > 0 ? "Selecione uma página..." : "Carregando..."}</option>{pages.map(page => <option key={page.id} value={page.id}>{page.name}</option>)}</select></div>
+                           <div><label htmlFor="message" className="block text-sm font-medium text-gray-300">Texto Principal</label><textarea name="message" value={adForm.message} onChange={(e) => handleFormChange(e, setAdForm)} rows={3} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md px-3 py-2" required placeholder="Fale sobre seu produto ou serviço..."/></div>
+                           <div><label htmlFor="headline" className="block text-sm font-medium text-gray-300">Título</label><input type="text" name="headline" value={adForm.headline} onChange={(e) => handleFormChange(e, setAdForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md px-3 py-2" required placeholder="Uma chamada curta e impactante"/></div>
+                           <div><label htmlFor="link" className="block text-sm font-medium text-gray-300">Link de Destino</label><input type="url" name="link" value={adForm.link} onChange={(e) => handleFormChange(e, setAdForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md px-3 py-2" required placeholder="https://..."/></div>
+                           <div><label htmlFor="imageUrl" className="block text-sm font-medium text-gray-300">URL da Imagem</label><input type="url" name="imageUrl" value={adForm.imageUrl} onChange={(e) => handleFormChange(e, setAdForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md px-3 py-2" required placeholder="https://..."/></div>
                         </div>
                     )}
                 </div>
