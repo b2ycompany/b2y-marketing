@@ -16,6 +16,9 @@ export async function POST(request: NextRequest) {
     const uid = decodedToken.uid;
 
     const body = await request.json();
+       // --- LINHA DE DEPURAÇÃO NO BACKEND ---
+    console.log("BODY RECEBIDO PELA API:", body);
+    
     const { adAccountId, adSetId, pageId, adName, message, headline, imageUrl, link } = body;
 
     if (!adAccountId || !adSetId || !pageId || !adName || !message || !headline || !imageUrl || !link) {
