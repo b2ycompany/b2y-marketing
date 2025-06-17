@@ -41,14 +41,14 @@ type AdFormData = {
 export default function CampaignCreator() {
     const { user } = useAuth();
 
-    // Estados de Dados
+    // Estados para guardar os dados vindos da API da Meta
     const [adAccounts, setAdAccounts] = useState<AdAccount[]>([]);
     const [pages, setPages] = useState<FacebookPage[]>([]);
 
-    // Estados dos Formulários (começando em branco)
+    // Estados para controlar os dados de cada formulário
     const [campaignForm, setCampaignForm] = useState<CampaignFormData>({ adAccountId: '', campaignName: '', objective: 'OUTCOME_TRAFFIC' });
     const [adSetForm, setAdSetForm] = useState<AdSetFormData>({ adSetName: '', dailyBudget: '20.00' });
-    const [adForm, setAdForm] = useState<AdFormData>({ adName: '', pageId: '', message: '', headline: '', imageUrl: '', link: '' });
+    const [adForm, setAdForm] = useState<AdFormData>({ adName: '', pageId: '', message: '', headline: '', imageUrl: 'https://images.unsplash.com/photo-1555529669-e69e7aa0ba9e?q=80&w=1200', link: 'https://b2y-marketing.vercel.app' });
     
     // Novo estado para o targeting avançado
     const [targeting, setTargeting] = useState<TargetingData>({
@@ -58,12 +58,13 @@ export default function CampaignCreator() {
         geo_locations: { countries: ['BR'] }
     });
     
-    // Estados de Controle de UI
+    // Estados de Controle da Interface do Usuário
     const [activeStep, setActiveStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [feedback, setFeedback] = useState<{ type: 'success' | 'error', message: string } | null>(null);
     const [createdIds, setCreatedIds] = useState({ campaignId: '', adSetId: '', adId: '' });
 
+    // Efeito para buscar dados iniciais (contas e páginas)
     useEffect(() => {
         if (user) {
             fetchInitialData();
@@ -72,7 +73,7 @@ export default function CampaignCreator() {
 
     const fetchInitialData = async () => {
         if (!user) return;
-        setFeedback(null); // Limpa o feedback ao carregar os dados
+        setFeedback(null);
         try {
             const idToken = await user.getIdToken(true);
             const headers = { 'Authorization': `Bearer ${idToken}` };
@@ -145,9 +146,6 @@ export default function CampaignCreator() {
                 setActiveStep(3);
             } else if (activeStep === 3) {
                 const payload = { ...adForm, adAccountId: campaignForm.adAccountId, adSetId: createdIds.adSetId };
-                
-                console.log("ENVIANDO PAYLOAD PARA A API DE ANÚNCIOS:", payload);
-                
                 const res = await fetch('/api/facebook/ads/create', { method: 'POST', headers, body: JSON.stringify(payload) });
                 const result = await res.json();
                 if (!res.ok) throw new Error(result.error);
@@ -190,7 +188,7 @@ export default function CampaignCreator() {
                             <div>
                                 <label htmlFor="adAccountId" className="block text-sm font-medium text-gray-300">Conta de Anúncios</label>
                                 <select name="adAccountId" value={campaignForm.adAccountId} onChange={(e) => handleFormChange(e, setCampaignForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md py-2 pl-3 pr-10" required>
-                                    <option value="" disabled>{adAccounts.length > 0 ? "Selecione uma conta..." : "Carregando..."}</option>
+                                    <option value="" disabled>{adAccounts.length > 0 ? "Selecione uma conta..." : "Carregando contas..."}</option>
                                     {adAccounts.map(acc => <option key={acc.account_id} value={acc.account_id}>{acc.name} ({acc.account_id})</option>)}
                                 </select>
                             </div>
@@ -230,7 +228,7 @@ export default function CampaignCreator() {
                     )}
                 </div>
 
-                 <div className={`bg-dark-card border rounded-xl p-6 transition-opacity duration-500 ${activeStep >= 3 ? 'opacity-100' : 'opacity-50'} ${activeStep === 3 ? 'border-primary' : 'border-gray-700'}`}>
+                <div className={`bg-dark-card border rounded-xl p-6 transition-opacity duration-500 ${activeStep >= 3 ? 'opacity-100' : 'opacity-50'} ${activeStep === 3 ? 'border-primary' : 'border-gray-700'}`}>
                     <div className="flex justify-between items-center">
                         <h2 className="text-xl font-bold text-white flex items-center space-x-3">{getStepStatusIcon(3)} <span>Passo 3: Criativo do Anúncio</span></h2>
                     </div>
@@ -246,7 +244,7 @@ export default function CampaignCreator() {
                            <div>
                                <label htmlFor="message" className="block text-sm font-medium text-gray-300">Texto Principal</label>
                                <textarea name="message" value={adForm.message} onChange={(e) => handleFormChange(e, setAdForm)} rows={3} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md px-3 py-2" required placeholder="Fale sobre seu produto ou serviço..."/>
-                            </div>
+                           </div>
                            <div>
                                <label htmlFor="headline" className="block text-sm font-medium text-gray-300">Título</label>
                                <input type="text" name="headline" value={adForm.headline} onChange={(e) => handleFormChange(e, setAdForm)} className="mt-1 block w-full bg-gray-900 border-gray-600 rounded-md px-3 py-2" required placeholder="Uma chamada curta e impactante"/>
@@ -271,9 +269,9 @@ export default function CampaignCreator() {
                     </div>
                 )}
                 
-                {feedback?.type === 'success' && (
-                    <div className="mt-4 p-4 rounded-md animate-fade-in bg-green-900/50 text-green-300 border border-green-500">
-                        <p className="font-bold">Sucesso!</p>
+                {feedback && (
+                    <div className={`mt-4 p-4 rounded-md animate-fade-in ${feedback.type === 'success' ? 'bg-green-900/50 text-green-300 border border-green-500' : 'bg-red-900/50 text-red-300 border border-red-500'}`}>
+                        <p className="font-bold">{feedback.type === 'success' ? 'Sucesso!' : 'Erro:'}</p>
                         <p>{feedback.message}</p>
                     </div>
                 )}
