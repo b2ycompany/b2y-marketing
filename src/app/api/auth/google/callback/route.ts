@@ -5,6 +5,7 @@ import { google } from 'googleapis';
 
 export const dynamic = 'force-dynamic';
 
+// A sua inicialização do cliente OAuth2 está perfeita.
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
@@ -21,22 +22,29 @@ export async function GET(request: NextRequest) {
   }
   
   try {
-    // Troca o código de autorização por tokens
+    // A sua troca de código por tokens está perfeita.
     const { tokens } = await oauth2Client.getToken(code);
     const { access_token, refresh_token, expiry_date } = tokens;
 
     // Salva os tokens no documento do usuário no Firestore
     const userDocRef = adminDb.collection('users').doc(state);
-    await userDocRef.update({
-      'connections.google.accessToken': access_token,
-      'connections.google.refreshToken': refresh_token,
-      'connections.google.expiryDate': expiry_date,
-      'connections.google.connectedAt': new Date(),
-    });
+
+    // AQUI ESTÁ A CUSTOMIZAÇÃO: Usando .set() com { merge: true }
+    // Isto garante que o código funcionará mesmo que o documento ou o campo 'connections' não existam.
+    await userDocRef.set({
+      connections: {
+        google: {
+          accessToken: access_token,
+          refreshToken: refresh_token,
+          expiryDate: expiry_date,
+          connectedAt: new Date(),
+        }
+      }
+    }, { merge: true });
 
     console.log("Tokens do Google salvos com sucesso para o usuário:", state);
 
-    // Redireciona de volta para a página de configurações com sucesso
+    // O seu redirecionamento de sucesso está perfeito.
     return NextResponse.redirect(new URL('/settings?success=google-connected', request.url));
 
   } catch (error: any) {
