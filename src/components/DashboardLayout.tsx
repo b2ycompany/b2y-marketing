@@ -1,7 +1,8 @@
 "use client";
 
-import { useAuth } from "@/context/AuthContext";
-import { logout } from "@/firebase/auth";
+import { useAuth } from "@/context/AuthContext"; // Apenas este import de auth é necessário
+// O import da função 'logout' de um ficheiro separado já não é necessário
+// import { logout } from "@/firebase/auth"; 
 import { LayoutDashboard, Megaphone, LogOut, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from 'next/navigation';
@@ -11,13 +12,13 @@ type DashboardLayoutProps = {
 };
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
-  const { user } = useAuth();
+  // A função 'logout' agora vem diretamente do nosso hook useAuth!
+  const { user, logout } = useAuth();
   const pathname = usePathname();
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
     { href: '/campaigns', label: 'Campanhas', icon: <Megaphone size={20} /> },
-    // ATIVANDO O LINK DE CONFIGURAÇÕES
     { href: '/settings', label: 'Configurações', icon: <Settings size={20} />, disabled: false },
   ];
 
@@ -42,6 +43,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             {user?.photoURL && (<img src={user.photoURL} alt="Foto do usuário" className="w-10 h-10 rounded-full" />)}
             <div><p className="text-white font-semibold text-sm">{user?.displayName}</p><p className="text-gray-400 text-xs">{user?.email}</p></div>
           </div>
+          {/* O botão de logout não muda. Ele simplesmente chama a nova função 'logout' do contexto. */}
           <button onClick={logout} className="w-full flex items-center justify-center space-x-3 text-gray-300 hover:text-white hover:bg-red-600/50 p-2 rounded-md transition"><LogOut size={20} /><span>Sair</span></button>
         </div>
       </aside>
