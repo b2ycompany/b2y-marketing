@@ -1,59 +1,25 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { FaFacebook, FaGoogle, FaTiktok, FaCheckCircle } from 'react-icons/fa';
 import { Rocket } from 'lucide-react';
 
-// Definindo o tipo para o status das conexões
-type ConnectionsStatus = {
-    meta: boolean;
-    google: boolean;
-    tiktok: boolean;
-};
-
-// Adicionamos a propriedade 'onContinue' para comunicação com a página pai.
+// A propriedade 'onContinue' permite que este componente comunique com a página pai (Dashboard),
+// informando quais plataformas foram selecionadas para avançar para o próximo passo.
 type PlatformSelectorProps = {
     onContinue: (selectedPlatforms: string[]) => void;
 };
 
 export default function PlatformSelector({ onContinue }: PlatformSelectorProps) {
-    const { user } = useAuth();
-    const [connections, setConnections] = useState<ConnectionsStatus>({ meta: false, google: false, tiktok: false });
-    const [isLoading, setIsLoading] = useState(true);
+    // Obtém o status das conexões e o estado de carregamento diretamente do AuthContext.
+    // Não há mais lógica de busca de dados dentro deste componente.
+    const { connections, loading } = useAuth();
+    
+    // Estado local apenas para controlar quais cards estão visualmente selecionados.
     const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
 
-    useEffect(() => {
-        if (user) {
-            fetchConnections();
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user]);
-
-    const fetchConnections = async () => {
-        if (!user) return;
-        setIsLoading(true);
-        try {
-            const idToken = await user.getIdToken(true);
-            const response = await fetch('/api/user/connections', {
-                headers: { 'Authorization': `Bearer ${idToken}` }
-            });
-            const data = await response.json();
-            if (!response.ok) throw new Error("Falha ao carregar conexões.");
-
-            setConnections({
-                meta: !!data.connections?.meta,
-                google: !!data.connections?.google,
-                tiktok: !!data.connections?.tiktok,
-            });
-        } catch (error) {
-            console.error(error);
-            setConnections({ meta: false, google: false, tiktok: false });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
+    // Função para adicionar ou remover uma plataforma da lista de selecionadas.
     const togglePlatform = (platformId: string) => {
         setSelectedPlatforms(prev => 
             prev.includes(platformId) 
@@ -62,13 +28,33 @@ export default function PlatformSelector({ onContinue }: PlatformSelectorProps) 
         );
     };
 
+    // Array de configuração para renderizar os cards das plataformas dinamicamente.
     const platforms = [
-        { name: 'Meta', id: 'meta', icon: <FaFacebook className="h-12 w-12 text-blue-500" />, connected: connections.meta, description: "Facebook & Instagram" },
-        { name: 'Google', id: 'google', icon: <FaGoogle className="h-12 w-12" />, connected: connections.google, description: "Pesquisa & Display" },
-        { name: 'TikTok', id: 'tiktok', icon: <FaTiktok className="h-12 w-12 text-white" />, connected: connections.tiktok, description: "Vídeos Curtos" },
+        { 
+            name: 'Meta', 
+            id: 'meta', 
+            icon: <FaFacebook className="h-12 w-12 text-blue-500" />, 
+            connected: connections.meta, 
+            description: "Facebook & Instagram" 
+        },
+        { 
+            name: 'Google', 
+            id: 'google', 
+            icon: <FaGoogle className="h-12 w-12" />, 
+            connected: connections.google, 
+            description: "Pesquisa & Display" 
+        },
+        { 
+            name: 'TikTok', 
+            id: 'tiktok', 
+            icon: <FaTiktok className="h-12 w-12 text-white" />, 
+            connected: false, // Exemplo de plataforma ainda não conectável
+            description: "Vídeos Curtos" 
+        },
     ];
 
-    if (isLoading) {
+    // Exibe um estado de carregamento enquanto o AuthContext verifica as conexões.
+    if (loading) {
         return (
             <div className="flex flex-col h-full w-full items-center justify-center text-white">
                 <Rocket className="animate-pulse h-10 w-10 mb-4" />
