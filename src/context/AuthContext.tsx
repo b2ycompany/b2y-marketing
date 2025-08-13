@@ -10,7 +10,7 @@ type ConnectionsStatus = {
   google: boolean;
 };
 
-// Atualizamos o tipo do contexto para incluir as conexões e uma função para recarregá-las
+// O tipo do contexto permanece o mesmo
 type AuthContextType = {
   user: User | null;
   loading: boolean;
@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [connections, setConnections] = useState<ConnectionsStatus>({ meta: false, google: false });
 
-  // Função para buscar o estado real das conexões
+  // A FUNÇÃO DE VERIFICAÇÃO CENTRALIZADA E MELHORADA
   const checkConnections = async (currentUser: User | null) => {
     if (!currentUser) {
       setConnections({ meta: false, google: false });
@@ -40,18 +40,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     try {
       const idToken = await currentUser.getIdToken(true);
-      const response = await fetch('/api/user/connections', {
+      
+      // Verificação da Meta: A fonte da verdade é a existência de contas de anúncio.
+      const metaCheckPromise = fetch('/api/facebook/adaccounts', {
           headers: { 'Authorization': `Bearer ${idToken}` }
       });
-      const data = await response.json();
-      if (response.ok) {
-        setConnections({
-          meta: !!data.connections?.meta,
-          google: !!data.connections?.google,
-        });
-      }
+
+      // Verificação do Google: A fonte da verdade é a existência da conexão no DB.
+      const googleCheckPromise = fetch('/api/user/connections', {
+          headers: { 'Authorization': `Bearer ${idToken}` }
+      });
+
+      // Executa ambas as verificações em paralelo para maior eficiência
+      const [metaRes, googleRes] = await Promise.all([metaCheckPromise, googleCheckPromise]);
+
+      // Processa o resultado da Meta
+      const metaData = await metaRes.json();
+      const isMetaConnected = metaRes.ok && Array.isArray(metaData) && metaData.length > 0;
+
+      // Processa o resultado do Google
+      const googleData = await googleRes.json();
+      const isGoogleConnected = googleRes.ok && !!googleData.connections?.google;
+
+      setConnections({ meta: isMetaConnected, google: isGoogleConnected });
+
     } catch (error) {
-      console.error("Erro ao buscar conexões no contexto:", error);
+      console.error("Erro ao centralizar a verificação de conexões:", error);
       setConnections({ meta: false, google: false });
     }
   };
@@ -78,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user, 
     loading, 
     connections,
-    recheckConnections: () => checkConnections(user), // Expõe a função para recarregar
+    recheckConnections: () => checkConnections(user),
     logout 
   };
 
